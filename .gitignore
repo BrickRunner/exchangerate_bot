@@ -1,1 +1,24 @@
-.env
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+
+# SQLite база (если используешь локально)
+*.db
+*.sqlite3
+
+# Виртуальное окружение
+venv/
+.env/
+
+# IDE (VSCode)
+.vscode/
+.idea/
+
+# Логи
+*.log
+
+# Сборки/кэш
+*.pyc
