@@ -1,0 +1,145 @@
+from aiogram import types
+from aiogram.exceptions import TelegramBadRequest
+
+from database import get_settings, update_settings
+from keyboards import (
+    settings_menu, build_currencies_kb, build_days_kb, 
+    build_timezone_kb, main_menu
+)
+
+
+async def handle_settings(m: types.Message):
+    """Обработка выбора настроек"""
+    await m.answer("⚙ Настройки — выберите раздел:", reply_markup=settings_menu())
+
+
+async def cb_set_currencies(cb: types.CallbackQuery):
+    """Обработка выбора валют в настройках"""
+    row = await get_settings(cb.from_user.id)
+    selected = [c.strip().upper() for c in (row[1] or "USD,EUR").split(",") if c.strip()]
+    kb = await build_currencies_kb(selected)
+    try:
+        await cb.message.edit_text("Выберите валюты (нажмите, чтобы переключить):", reply_markup=kb)
+    except TelegramBadRequest as e:
+        if "message is not modified" not in str(e):
+            raise
+    await cb.answer()
+
+
+async def cb_toggle_curr(cb: types.CallbackQuery):
+    """Обработка переключения валюты"""
+    cur = cb.data.split(":", 1)[1]
+    row = await get_settings(cb.from_user.id)
+    selected = [c.strip().upper() for c in (row[1] or "USD,EUR").split(",") if c.strip()]
+    
+    if cur in selected:
+        selected.remove(cur)
+    else:
+        selected.append(cur)
+    
+    if selected:
+        await update_settings(cb.from_user.id, "currencies", ",".join(selected))
+    else:
+        await update_settings(cb.from_user.id, "currencies", "")
+    
+    await cb_set_currencies(cb)
+
+
+async def cb_set_time(cb: types.CallbackQuery):
+    """Обработка выбора времени уведомлений"""
+    row = await get_settings(cb.from_user.id)
+    current_time = row[2] or "08:00"
+    kb = settings_menu()
+    try:
+        await cb.message.edit_text(
+            f"⏰ Текущее время уведомлений: <b>{current_time}</b>\n\n"
+            "Введите новое время в формате ЧЧ:ММ (24ч), например 09:00",
+            reply_markup=kb,
+            parse_mode="HTML"
+        )
+    except TelegramBadRequest:
+        pass
+    await cb.answer()
+
+
+async def msg_set_time(m: types.Message):
+    """Обработка ввода времени уведомлений"""
+    hh, mm = m.text.split(":")
+    try:
+        hh_i = int(hh)
+        mm_i = int(mm)
+        if not (0 <= hh_i < 24 and 0 <= mm_i < 60):
+            raise ValueError
+    except Exception:
+        await m.answer("Неверный формат времени. Используйте ЧЧ:ММ (00:00 - 23:59).", reply_markup=main_menu())
+        return
+    
+    await update_settings(m.from_user.id, "notify_time", m.text)
+    await m.answer(
+        f"✅ Время уведомлений обновлено!\n\n"
+        f"Текущее время: <b>{m.text}</b>",
+        reply_markup=main_menu(),
+        parse_mode="HTML"
+    )
+
+
+async def cb_set_days(cb: types.CallbackQuery):
+    """Обработка выбора дней уведомлений"""
+    row = await get_settings(cb.from_user.id)
+    selected = [d for d in (row[3] or "1,2,3,4,5").split(",") if d.strip()]
+    kb = build_days_kb(selected)
+    try:
+        await cb.message.edit_text("Выберите дни рассылки (нажмите чтобы переключить):", reply_markup=kb)
+    except TelegramBadRequest:
+        pass
+    await cb.answer()
+
+
+async def cb_toggle_day(cb: types.CallbackQuery):
+    """Обработка переключения дня уведомлений"""
+    day = cb.data.split(":", 1)[1]
+    row = await get_settings(cb.from_user.id)
+    selected = [d for d in (row[3] or "1,2,3,4,5").split(",") if d.strip()]
+    
+    if day in selected:
+        selected.remove(day)
+    else:
+        selected.append(day)
+    
+    selected_sorted = sorted(set(int(x) for x in selected)) if selected else []
+    selected_str = ",".join(str(x) for x in selected_sorted)
+    if selected_str == "":
+        selected_str = ""
+    
+    await update_settings(cb.from_user.id, "days", selected_str)
+    await cb_set_days(cb)
+
+
+async def cb_set_timezone(cb: types.CallbackQuery):
+    """Обработка выбора часового пояса"""
+    kb = build_timezone_kb()
+    try:
+        await cb.message.edit_text("Выберите часовой пояс (UTC offset):", reply_markup=kb)
+    except TelegramBadRequest:
+        pass
+    await cb.answer()
+
+
+async def cb_set_tz(cb: types.CallbackQuery):
+    """Установка часового пояса"""
+    tz = int(cb.data.split(":", 1)[1])
+    await update_settings(cb.from_user.id, "timezone", str(tz))
+    try:
+        await cb.answer(f"🌍 Часовой пояс установлен: GMT{tz:+}")
+    except Exception:
+        pass
+    await cb.message.edit_text("⚙ Настройки:", reply_markup=settings_menu())
+
+
+async def cb_back(cb: types.CallbackQuery):
+    """Обработка возврата в меню настроек"""
+    try:
+        await cb.message.edit_text("⚙ Настройки:", reply_markup=settings_menu())
+    except TelegramBadRequest:
+        pass
+    await cb.answer()
