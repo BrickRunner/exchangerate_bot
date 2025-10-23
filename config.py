@@ -10,6 +10,12 @@ DB_PATH = os.getenv("DB_PATH", "rates.db")
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN не установлен в .env")
 
+# Настройки по умолчанию
+DEFAULT_TIMEZONE = 3  # UTC+3 (Московское время)
+DEFAULT_CURRENCIES = "USD,EUR"
+DEFAULT_WORKDAYS = [1, 2, 3, 4, 5]  # Понедельник-Пятница
+DEFAULT_NOTIFY_TIME = "08:00"
+
 # API URLs
 CBR_URL = "https://www.cbr-xml-daily.ru/daily_json.js"
 CBR_ARCHIVE_URL = "https://www.cbr-xml-daily.ru/archive/{year}/{month:02d}/{day:02d}/daily_json.js"

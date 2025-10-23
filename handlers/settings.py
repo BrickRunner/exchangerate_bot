@@ -117,9 +117,17 @@ async def cb_toggle_day(cb: types.CallbackQuery):
 
 async def cb_set_timezone(cb: types.CallbackQuery):
     """Обработка выбора часового пояса"""
+    row = await get_settings(cb.from_user.id)
+    current_tz = row[4] or "3"  # По умолчанию UTC+3
     kb = build_timezone_kb()
     try:
-        await cb.message.edit_text("Выберите часовой пояс (UTC offset):", reply_markup=kb)
+        tz_display = f"UTC{int(current_tz):+d}" if int(current_tz) != 0 else "UTC+0"
+        await cb.message.edit_text(
+            f"🌍 Текущий часовой пояс: <b>{tz_display}</b>\n\n"
+            "Выберите новый часовой пояс:",
+            reply_markup=kb,
+            parse_mode="HTML"
+        )
     except TelegramBadRequest:
         pass
     await cb.answer()
@@ -130,7 +138,8 @@ async def cb_set_tz(cb: types.CallbackQuery):
     tz = int(cb.data.split(":", 1)[1])
     await update_settings(cb.from_user.id, "timezone", str(tz))
     try:
-        await cb.answer(f"🌍 Часовой пояс установлен: GMT{tz:+}")
+        tz_display = f"UTC{tz:+d}" if tz != 0 else "UTC+0"
+        await cb.answer(f"🌍 Часовой пояс установлен: {tz_display}")
     except Exception:
         pass
     await cb.message.edit_text("⚙ Настройки:", reply_markup=settings_menu())

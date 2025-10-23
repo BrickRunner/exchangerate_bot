@@ -3,22 +3,52 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.env
+*.pyc
 
-# SQLite база (если используешь локально)
+# Environment variables (ВАЖНО: содержит секретные токены!)
+.env
+*.env
+!.env.example
+
+# SQLite база данных
 *.db
 *.sqlite3
+rates.db
 
 # Виртуальное окружение
 venv/
+.venv/
+env/
 .env/
+ENV/
+env.bak/
+venv.bak/
 
-# IDE (VSCode)
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Логи
 *.log
+logs/
+bot.log
 
-# Сборки/кэш
-*.pyc
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover

@@ -1,5 +1,14 @@
+# Telegram Bot Framework
 aiogram==3.0.0b7
+
+# HTTP Client
 aiohttp==3.8.4
-apscheduler==3.10.1
+
+# Database
 aiosqlite==0.18.0
+
+# Environment Variables
 python-dotenv==1.0.0
+
+# Scheduling (используется в проекте, но можно удалить если не нужно)
+apscheduler==3.10.1
