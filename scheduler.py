@@ -35,7 +35,8 @@ async def scheduler_loop(bot: Bot):
                 last_checked_minute = current_minute
 
             rows = await get_all_users_settings()
-            logger.debug(f"Checking notifications for {len(rows)} users")
+            if rows:
+                logger.info(f"Scheduler check: {len(rows)} users at UTC {current_time.strftime('%H:%M:%S')}")
 
             for row in rows:
                 user_id, currencies, notify_time, days, tz, last_sent = row
@@ -68,6 +69,7 @@ async def scheduler_loop(bot: Bot):
                     continue
 
                 if user_now.hour == hh and user_now.minute == mm:
+                    logger.info(f"⏰ Time match for user {user_id}: {hh:02d}:{mm:02d}")
                     daynum = user_now.isoweekday()
 
                     try:
@@ -81,7 +83,7 @@ async def scheduler_loop(bot: Bot):
 
                         # Проверка, что уведомление еще не отправлялось сегодня
                         if last_sent == today_iso:
-                            logger.debug(f"Already sent notification today for user {user_id}")
+                            logger.info(f"Already sent notification today for user {user_id}")
                             continue
 
                         # Отправка курсов валют

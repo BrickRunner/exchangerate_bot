@@ -53,7 +53,8 @@ async def cb_set_time(cb: types.CallbackQuery):
     try:
         await cb.message.edit_text(
             f"⏰ Текущее время уведомлений: <b>{current_time}</b>\n\n"
-            "Введите новое время в формате ЧЧ:ММ (24ч), например 09:00",
+            "Введите новое время в формате ЧЧ:ММ или Ч:М (24ч)\n"
+            "Примеры: 09:00, 9:0, 7:30, 23:45",
             reply_markup=kb,
             parse_mode="HTML"
         )
@@ -64,20 +65,39 @@ async def cb_set_time(cb: types.CallbackQuery):
 
 async def msg_set_time(m: types.Message):
     """Обработка ввода времени уведомлений"""
-    hh, mm = m.text.split(":")
     try:
-        hh_i = int(hh)
-        mm_i = int(mm)
+        # Разделяем по двоеточию
+        if ":" not in m.text:
+            raise ValueError("Нет разделителя :")
+
+        parts = m.text.split(":")
+        if len(parts) != 2:
+            raise ValueError("Неверное количество частей")
+
+        hh, mm = parts
+        hh_i = int(hh.strip())
+        mm_i = int(mm.strip())
+
+        # Валидация диапазона
         if not (0 <= hh_i < 24 and 0 <= mm_i < 60):
-            raise ValueError
-    except Exception:
-        await m.answer("Неверный формат времени. Используйте ЧЧ:ММ (00:00 - 23:59).", reply_markup=main_menu())
+            raise ValueError("Время вне диапазона")
+
+        # Форматирование в корректный вид ЧЧ:ММ
+        formatted_time = f"{hh_i:02d}:{mm_i:02d}"
+
+    except (ValueError, AttributeError) as e:
+        await m.answer(
+            "❌ Неверный формат времени!\n\n"
+            "Используйте формат ЧЧ:ММ или Ч:М\n"
+            "Примеры: 09:00, 9:0, 23:45, 7:30",
+            reply_markup=main_menu()
+        )
         return
-    
-    await update_settings(m.from_user.id, "notify_time", m.text)
+
+    await update_settings(m.from_user.id, "notify_time", formatted_time)
     await m.answer(
         f"✅ Время уведомлений обновлено!\n\n"
-        f"Текущее время: <b>{m.text}</b>",
+        f"Текущее время: <b>{formatted_time}</b>",
         reply_markup=main_menu(),
         parse_mode="HTML"
     )

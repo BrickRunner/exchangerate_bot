@@ -47,7 +47,12 @@ def register_handlers():
     dp.message.register(settings.handle_settings, lambda m: m.text == "⚙ Настройки")
     dp.message.register(
         settings.msg_set_time,
-        lambda m: len(m.text) == 5 and m.text.count(":") == 1 and m.text.replace(":", "").isdigit()
+        lambda m: (
+            m.text and
+            m.text.count(":") == 1 and
+            1 <= len(m.text) <= 8 and  # От "0:0" до "  23:59  "
+            all(part.strip().isdigit() for part in m.text.split(":") if part.strip())
+        )
     )
     dp.callback_query.register(settings.cb_set_currencies, lambda c: c.data == "set_currencies")
     dp.callback_query.register(settings.cb_toggle_curr, lambda c: c.data.startswith("toggle_curr:"))
@@ -141,8 +146,10 @@ async def main():
         raise
     finally:
         # Финальная очистка
-        if not bot.session.closed:
+        try:
             await shutdown()
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
 
 
 def handle_signal(signum, frame):

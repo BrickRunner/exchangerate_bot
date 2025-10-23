@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python test_time_parsing.py:*)",
+      "Bash(python:*)",
+      "Bash(if [ -f bot.log ])",
+      "Bash(then tail -50 bot.log)",
+      "Bash(else echo \"Файл bot.log не найден\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []
